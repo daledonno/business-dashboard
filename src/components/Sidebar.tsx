@@ -1,7 +1,12 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, ChevronRight, ChevronLeft, Trash2 } from "lucide-react";
+import {
+  PlusCircle,
+  ChevronRight,
+  ChevronLeft,
+  Trash2,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
