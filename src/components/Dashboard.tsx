@@ -21,13 +21,51 @@ interface Board {
   links?: { id: string; title: string; url: string }[];
 }
 
-const defaultBoards = [
-  { id: "1", title: "Business Details", description: "", type: "standard", checklist: [] },
-  { id: "2", title: "Launch List", description: "", type: "standard", checklist: [] },
-  { id: "3", title: "Process", description: "", type: "standard", checklist: [] },
-  { id: "4", title: "Business Goals", description: "", type: "standard", checklist: [] },
-  { id: "5", title: "Marketing", description: "", type: "image-gallery", checklist: [], images: [] },
-  { id: "6", title: "Quick Links", description: "", type: "quick-links", checklist: [], links: [] },
+const defaultBoards: Board[] = [
+  { 
+    id: "1", 
+    title: "Business Details", 
+    description: "", 
+    type: "standard" as const, 
+    checklist: [] 
+  },
+  { 
+    id: "2", 
+    title: "Launch List", 
+    description: "", 
+    type: "standard" as const, 
+    checklist: [] 
+  },
+  { 
+    id: "3", 
+    title: "Process", 
+    description: "", 
+    type: "standard" as const, 
+    checklist: [] 
+  },
+  { 
+    id: "4", 
+    title: "Business Goals", 
+    description: "", 
+    type: "standard" as const, 
+    checklist: [] 
+  },
+  { 
+    id: "5", 
+    title: "Marketing", 
+    description: "", 
+    type: "image-gallery" as const, 
+    checklist: [], 
+    images: [] 
+  },
+  { 
+    id: "6", 
+    title: "Quick Links", 
+    description: "", 
+    type: "quick-links" as const, 
+    checklist: [], 
+    links: [] 
+  }
 ];
 
 const Dashboard: React.FC = () => {

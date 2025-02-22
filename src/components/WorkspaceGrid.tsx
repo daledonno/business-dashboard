@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { PlusCircle, Link, Image } from "lucide-react";
 
 interface WorkspaceGridProps {
   business: {
@@ -20,7 +21,10 @@ interface WorkspaceGridProps {
       id: string;
       title: string;
       description: string;
+      type: "standard" | "image-gallery" | "quick-links";
       checklist: Array<{ id: string; text: string; checked: boolean }>;
+      images?: string[];
+      links?: Array<{ id: string; title: string; url: string }>;
     }>;
   };
   onUpdateBoard: (
@@ -29,6 +33,8 @@ interface WorkspaceGridProps {
       title?: string;
       description?: string;
       checklist?: Array<{ id: string; text: string; checked: boolean }>;
+      images?: string[];
+      links?: Array<{ id: string; title: string; url: string }>;
     }
   ) => void;
 }
@@ -39,6 +45,7 @@ const WorkspaceGrid: React.FC<WorkspaceGridProps> = ({
 }) => {
   const [selectedBoard, setSelectedBoard] = useState<string | null>(null);
   const [newChecklistItem, setNewChecklistItem] = useState("");
+  const [newLink, setNewLink] = useState({ title: "", url: "" });
 
   const handleAddChecklistItem = (boardId: string) => {
     if (!newChecklistItem.trim()) return;
@@ -59,6 +66,40 @@ const WorkspaceGrid: React.FC<WorkspaceGridProps> = ({
     setNewChecklistItem("");
   };
 
+  const handleAddLink = (boardId: string) => {
+    if (!newLink.title.trim() || !newLink.url.trim()) return;
+
+    const board = business.boards.find((b) => b.id === boardId);
+    if (!board) return;
+
+    const newLinkItem = {
+      id: Date.now().toString(),
+      ...newLink,
+    };
+
+    onUpdateBoard(boardId, {
+      links: [...(board.links || []), newLinkItem],
+    });
+
+    setNewLink({ title: "", url: "" });
+  };
+
+  const handleImageUpload = async (boardId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Here you would typically upload the file to a storage service
+    // For now, we'll use a local URL
+    const imageUrl = URL.createObjectURL(file);
+    
+    const board = business.boards.find((b) => b.id === boardId);
+    if (!board) return;
+
+    onUpdateBoard(boardId, {
+      images: [...(board.images || []), imageUrl],
+    });
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-6">{business.name}</h1>
@@ -70,13 +111,42 @@ const WorkspaceGrid: React.FC<WorkspaceGridProps> = ({
             onClick={() => setSelectedBoard(board.id)}
           >
             <h3 className="text-lg font-medium mb-2">{board.title}</h3>
-            <p className="text-gray-600 line-clamp-3">{board.description}</p>
-            {board.checklist.length > 0 && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-500">
-                  {board.checklist.filter((item) => item.checked).length} of{" "}
-                  {board.checklist.length} tasks completed
-                </p>
+            <p className="text-gray-600 mb-4 line-clamp-2">{board.description}</p>
+
+            {board.type === "standard" && board.checklist.length > 0 && (
+              <div className="checklist-preview">
+                {board.checklist.map((item) => (
+                  <div key={item.id} className="flex items-center gap-2">
+                    <Checkbox checked={item.checked} />
+                    <span className={item.checked ? "line-through text-gray-400" : ""}>
+                      {item.text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {board.type === "image-gallery" && (
+              <div className="image-gallery">
+                {board.images?.map((image, index) => (
+                  <img key={index} src={image} alt={`Gallery image ${index + 1}`} />
+                ))}
+              </div>
+            )}
+
+            {board.type === "quick-links" && (
+              <div className="quick-links">
+                {board.links?.map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {link.title}
+                  </a>
+                ))}
               </div>
             )}
           </div>
@@ -105,7 +175,7 @@ const WorkspaceGrid: React.FC<WorkspaceGridProps> = ({
               </DialogHeader>
               <div className="space-y-6">
                 <div>
-                  <label className="text-sm font-medium">Description</label>
+                  <Label>Description</Label>
                   <Textarea
                     value={
                       business.boards.find((b) => b.id === selectedBoard)
@@ -120,61 +190,131 @@ const WorkspaceGrid: React.FC<WorkspaceGridProps> = ({
                     rows={4}
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Checklist</label>
-                  <div className="mt-2 space-y-2">
-                    {business.boards
-                      .find((b) => b.id === selectedBoard)
-                      ?.checklist.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-start space-x-2"
-                        >
-                          <Checkbox
-                            checked={item.checked}
-                            onCheckedChange={(checked) => {
-                              const board = business.boards.find(
-                                (b) => b.id === selectedBoard
-                              );
-                              if (!board) return;
 
-                              onUpdateBoard(selectedBoard, {
-                                checklist: board.checklist.map((i) =>
-                                  i.id === item.id
-                                    ? { ...i, checked: checked === true }
-                                    : i
-                                ),
-                              });
-                            }}
-                          />
-                          <span
-                            className={`flex-1 ${
-                              item.checked ? "line-through text-gray-400" : ""
-                            }`}
+                {business.boards.find((b) => b.id === selectedBoard)?.type === "standard" && (
+                  <div>
+                    <Label>Checklist</Label>
+                    <div className="mt-2 space-y-2">
+                      {business.boards
+                        .find((b) => b.id === selectedBoard)
+                        ?.checklist.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-start space-x-2"
                           >
-                            {item.text}
-                          </span>
-                        </div>
-                      ))}
-                    <div className="flex gap-2">
-                      <Input
-                        value={newChecklistItem}
-                        onChange={(e) => setNewChecklistItem(e.target.value)}
-                        placeholder="Add new item"
-                        onKeyDown={(e) =>
-                          e.key === "Enter" &&
-                          handleAddChecklistItem(selectedBoard)
-                        }
-                      />
-                      <Button
-                        size="icon"
-                        onClick={() => handleAddChecklistItem(selectedBoard)}
-                      >
-                        <PlusCircle className="h-4 w-4" />
-                      </Button>
+                            <Checkbox
+                              checked={item.checked}
+                              onCheckedChange={(checked) => {
+                                const board = business.boards.find(
+                                  (b) => b.id === selectedBoard
+                                );
+                                if (!board) return;
+
+                                onUpdateBoard(selectedBoard, {
+                                  checklist: board.checklist.map((i) =>
+                                    i.id === item.id
+                                      ? { ...i, checked: checked === true }
+                                      : i
+                                  ),
+                                });
+                              }}
+                            />
+                            <span
+                              className={`flex-1 ${
+                                item.checked ? "line-through text-gray-400" : ""
+                              }`}
+                            >
+                              {item.text}
+                            </span>
+                          </div>
+                        ))}
+                      <div className="flex gap-2">
+                        <Input
+                          value={newChecklistItem}
+                          onChange={(e) => setNewChecklistItem(e.target.value)}
+                          placeholder="Add new item"
+                          onKeyDown={(e) =>
+                            e.key === "Enter" &&
+                            handleAddChecklistItem(selectedBoard)
+                          }
+                        />
+                        <Button
+                          size="icon"
+                          onClick={() => handleAddChecklistItem(selectedBoard)}
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {business.boards.find((b) => b.id === selectedBoard)?.type === "image-gallery" && (
+                  <div>
+                    <Label>Images</Label>
+                    <div className="mt-2 space-y-4">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(selectedBoard, e)}
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        {business.boards
+                          .find((b) => b.id === selectedBoard)
+                          ?.images?.map((image, index) => (
+                            <img
+                              key={index}
+                              src={image}
+                              alt={`Gallery image ${index + 1}`}
+                              className="rounded-md object-cover w-full h-32"
+                            />
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {business.boards.find((b) => b.id === selectedBoard)?.type === "quick-links" && (
+                  <div>
+                    <Label>Quick Links</Label>
+                    <div className="mt-2 space-y-4">
+                      <div className="space-y-2">
+                        <Input
+                          value={newLink.title}
+                          onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
+                          placeholder="Link Title"
+                        />
+                        <Input
+                          value={newLink.url}
+                          onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+                          placeholder="URL"
+                        />
+                        <Button
+                          onClick={() => handleAddLink(selectedBoard)}
+                          className="w-full"
+                        >
+                          <Link className="h-4 w-4 mr-2" />
+                          Add Link
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        {business.boards
+                          .find((b) => b.id === selectedBoard)
+                          ?.links?.map((link) => (
+                            <a
+                              key={link.id}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block text-blue-600 hover:underline"
+                            >
+                              {link.title}
+                            </a>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}
