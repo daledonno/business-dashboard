@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -11,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Link, Image } from "lucide-react";
+import { PlusCircle, Link, Image, ListTodo } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface WorkspaceGridProps {
   business: {
@@ -25,6 +25,11 @@ interface WorkspaceGridProps {
       checklist: Array<{ id: string; text: string; checked: boolean }>;
       images?: string[];
       links?: Array<{ id: string; title: string; url: string }>;
+      features?: {
+        checklist?: boolean;
+        images?: boolean;
+        links?: boolean;
+      };
     }>;
   };
   onUpdateBoard: (
@@ -35,6 +40,11 @@ interface WorkspaceGridProps {
       checklist?: Array<{ id: string; text: string; checked: boolean }>;
       images?: string[];
       links?: Array<{ id: string; title: string; url: string }>;
+      features?: {
+        checklist?: boolean;
+        images?: boolean;
+        links?: boolean;
+      };
     }
   ) => void;
 }
@@ -100,6 +110,18 @@ const WorkspaceGrid: React.FC<WorkspaceGridProps> = ({
     });
   };
 
+  const toggleFeature = (boardId: string, feature: 'checklist' | 'images' | 'links') => {
+    const board = business.boards.find((b) => b.id === boardId);
+    if (!board) return;
+
+    onUpdateBoard(boardId, {
+      features: {
+        ...(board.features || {}),
+        [feature]: !(board.features?.[feature])
+      }
+    });
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-6">{business.name}</h1>
@@ -113,7 +135,7 @@ const WorkspaceGrid: React.FC<WorkspaceGridProps> = ({
             <h3 className="text-lg font-medium mb-2">{board.title}</h3>
             <p className="text-gray-600 mb-4 line-clamp-2">{board.description}</p>
 
-            {board.type === "standard" && board.checklist.length > 0 && (
+            {board.features?.checklist && board.checklist.length > 0 && (
               <div className="checklist-preview">
                 {board.checklist.map((item) => (
                   <div key={item.id} className="flex items-center gap-2">
@@ -126,17 +148,17 @@ const WorkspaceGrid: React.FC<WorkspaceGridProps> = ({
               </div>
             )}
 
-            {board.type === "image-gallery" && (
+            {board.features?.images && board.images && board.images.length > 0 && (
               <div className="image-gallery">
-                {board.images?.map((image, index) => (
+                {board.images.map((image, index) => (
                   <img key={index} src={image} alt={`Gallery image ${index + 1}`} />
                 ))}
               </div>
             )}
 
-            {board.type === "quick-links" && (
+            {board.features?.links && board.links && board.links.length > 0 && (
               <div className="quick-links">
-                {board.links?.map((link) => (
+                {board.links.map((link) => (
                   <a
                     key={link.id}
                     href={link.url}
@@ -191,7 +213,45 @@ const WorkspaceGrid: React.FC<WorkspaceGridProps> = ({
                   />
                 </div>
 
-                {business.boards.find((b) => b.id === selectedBoard)?.type === "standard" && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium">Enable Features</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <ListTodo className="w-4 h-4" />
+                        <Label>Checklist</Label>
+                      </div>
+                      <Switch
+                        checked={business.boards.find((b) => b.id === selectedBoard)?.features?.checklist}
+                        onCheckedChange={(checked) => toggleFeature(selectedBoard, 'checklist')}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Image className="w-4 h-4" />
+                        <Label>Images</Label>
+                      </div>
+                      <Switch
+                        checked={business.boards.find((b) => b.id === selectedBoard)?.features?.images}
+                        onCheckedChange={(checked) => toggleFeature(selectedBoard, 'images')}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Link className="w-4 h-4" />
+                        <Label>Quick Links</Label>
+                      </div>
+                      <Switch
+                        checked={business.boards.find((b) => b.id === selectedBoard)?.features?.links}
+                        onCheckedChange={(checked) => toggleFeature(selectedBoard, 'links')}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {business.boards.find((b) => b.id === selectedBoard)?.features?.checklist && (
                   <div>
                     <Label>Checklist</Label>
                     <div className="mt-2 space-y-2">
@@ -249,7 +309,7 @@ const WorkspaceGrid: React.FC<WorkspaceGridProps> = ({
                   </div>
                 )}
 
-                {business.boards.find((b) => b.id === selectedBoard)?.type === "image-gallery" && (
+                {business.boards.find((b) => b.id === selectedBoard)?.features?.images && (
                   <div>
                     <Label>Images</Label>
                     <div className="mt-2 space-y-4">
@@ -274,7 +334,7 @@ const WorkspaceGrid: React.FC<WorkspaceGridProps> = ({
                   </div>
                 )}
 
-                {business.boards.find((b) => b.id === selectedBoard)?.type === "quick-links" && (
+                {business.boards.find((b) => b.id === selectedBoard)?.features?.links && (
                   <div>
                     <Label>Quick Links</Label>
                     <div className="mt-2 space-y-4">
