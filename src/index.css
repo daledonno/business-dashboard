@@ -39,11 +39,13 @@
 }
 
 .business-card {
-  @apply bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-200;
+  @apply bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-200 h-full flex flex-col;
 }
 
 .card-grid {
   @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6;
+  grid-auto-rows: 1fr;
+  height: calc(100vh - 120px);
 }
 
 .sidebar-item {
@@ -67,4 +69,26 @@
     transform: translateX(0);
     opacity: 1;
   }
+}
+
+.checklist-preview {
+  @apply mt-4 text-sm text-gray-600;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.image-gallery {
+  @apply grid grid-cols-2 gap-2 mt-4;
+}
+
+.image-gallery img {
+  @apply rounded-md object-cover w-full h-24;
+}
+
+.quick-links {
+  @apply mt-4 space-y-2;
+}
+
+.quick-links a {
+  @apply text-blue-600 hover:underline block;
 }

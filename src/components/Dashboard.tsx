@@ -8,22 +8,26 @@ interface Business {
   id: string;
   name: string;
   boards: Board[];
+  order?: number;
 }
 
 interface Board {
   id: string;
   title: string;
   description: string;
+  type: "standard" | "image-gallery" | "quick-links";
   checklist: { id: string; text: string; checked: boolean }[];
+  images?: string[];
+  links?: { id: string; title: string; url: string }[];
 }
 
 const defaultBoards = [
-  { id: "1", title: "Business Details", description: "", checklist: [] },
-  { id: "2", title: "Launch List", description: "", checklist: [] },
-  { id: "3", title: "Process", description: "", checklist: [] },
-  { id: "4", title: "Business Goals", description: "", checklist: [] },
-  { id: "5", title: "Marketing", description: "", checklist: [] },
-  { id: "6", title: "Notes", description: "", checklist: [] },
+  { id: "1", title: "Business Details", description: "", type: "standard", checklist: [] },
+  { id: "2", title: "Launch List", description: "", type: "standard", checklist: [] },
+  { id: "3", title: "Process", description: "", type: "standard", checklist: [] },
+  { id: "4", title: "Business Goals", description: "", type: "standard", checklist: [] },
+  { id: "5", title: "Marketing", description: "", type: "image-gallery", checklist: [], images: [] },
+  { id: "6", title: "Quick Links", description: "", type: "quick-links", checklist: [], links: [] },
 ];
 
 const Dashboard: React.FC = () => {
@@ -42,6 +46,7 @@ const Dashboard: React.FC = () => {
       id: Date.now().toString(),
       name,
       boards: defaultBoards.map((board) => ({ ...board })),
+      order: businesses.length,
     };
     setBusinesses([...businesses, newBusiness]);
     setSelectedBusiness(newBusiness.id);
@@ -71,6 +76,11 @@ const Dashboard: React.FC = () => {
     toast.success("Business deleted successfully");
   };
 
+  const handleReorderBusinesses = (reorderedBusinesses: Business[]) => {
+    setBusinesses(reorderedBusinesses);
+    localStorage.setItem("businesses", JSON.stringify(reorderedBusinesses));
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar
@@ -79,6 +89,7 @@ const Dashboard: React.FC = () => {
         onSelectBusiness={setSelectedBusiness}
         onAddBusiness={addBusiness}
         onDeleteBusiness={deleteBusiness}
+        onReorderBusinesses={handleReorderBusinesses}
       />
       <main className="flex-1 overflow-auto">
         {selectedBusiness && (
